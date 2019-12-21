@@ -31,5 +31,13 @@ class Day06Test {
         val orbits = input.toOrbits()
         orbits.countAll() shouldBe 42
     }
+
+    @Test
+    fun `should find shortest path`() {
+        listOf("K", "J", "E", "D", "C", "B", "COM")
+            .minimalOrbitalTransfers(listOf("I", "D", "C", "B", "COM")) shouldBe 4
+    }
 }
+
+
 
