@@ -39,22 +39,22 @@ data class Moon(val position: Position, val velocity: Velocity) {
         )
     }
 
-    fun applyGravity(otherMoon: Moon) = with(position) {
+    fun applyGravityFor(otherMoon: Moon) = with(position) {
         copy(
             velocity = Velocity(
-                velocity.x + gravityRelativeTo(otherMoon) { it.x },
-                velocity.y + gravityRelativeTo(otherMoon) { it.y },
-                velocity.z + gravityRelativeTo(otherMoon) { it.z }
+                velocity.x + gravityRelativeTo(otherMoon) { x },
+                velocity.y + gravityRelativeTo(otherMoon) { y },
+                velocity.z + gravityRelativeTo(otherMoon) { z }
             )
         )
     }
 
     private fun Position.gravityRelativeTo(
         other: Moon,
-        axisGetter: (Position) -> Int
+        axis: Position.() -> Int
     ) = when {
-        axisGetter(other.position) > axisGetter(this) -> 1
-        axisGetter(other.position) < axisGetter(this) -> -1
+        other.position.axis() > this.axis() -> 1
+        other.position.axis() < this.axis() -> -1
         else -> 0
     }
 
@@ -63,10 +63,10 @@ data class Moon(val position: Position, val velocity: Velocity) {
 fun List<Moon>.applyVelocity(): List<Moon> = map { it.applyVelocity() }
 
 fun List<Moon>.applyGravity(): List<Moon> {
-    return map { planet ->
-        fold(planet) { current, otherPlanet ->
-            if (current != otherPlanet) {
-                current.applyGravity(otherPlanet)
+    return map { moon ->
+        fold(moon) { current, other ->
+            if (current != other) {
+                current.applyGravityFor(other)
             } else current
         }
     }
