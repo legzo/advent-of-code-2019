@@ -9,6 +9,7 @@ data class Position(val x: Int, val y: Int, val z: Int) {
 data class Velocity(val x: Int, val y: Int, val z: Int) {
     companion object {
         fun of(x: String, y: String, z: String) = Velocity(x.asInt(), y.asInt(), z.asInt())
+        fun default() = Velocity(0, 0, 0)
     }
 }
 
@@ -20,28 +21,27 @@ data class AstralSystem(val moons: List<Moon>) {
         get() = moons.sumBy { it.potentialEnergy * it.kineticEnergy }
 
     companion object {
-        private val pattern = Regex("pos=<x=([^,]+), y=([^,]+), z=([^>]+)>, vel=<x=([^,]+), y=([^,]+), z=([^>]+)>")
-        private val alternativePattern = Regex("<x=([^,]+), y=([^,]+), z=([^>]+)>")
 
         fun of(input: String): AstralSystem {
             return AstralSystem(
                 input
                     .split("\n")
                     .mapNotNull {
-                        val matchResult = pattern.find(it)
-
-                        if(matchResult != null) {
-                            val (posX, posY, posZ, velX, velY, velZ) = matchResult.destructured
+                        it.parseMoonWithPattern("pos=<x=([^,]+), y=([^,]+), z=([^>]+)>, vel=<x=([^,]+), y=([^,]+), z=([^>]+)>") {
+                            val (posX, posY, posZ, velX, velY, velZ) = destructured
                             Moon(Position.of(posX, posY, posZ), Velocity.of(velX, velY, velZ))
-                        } else {
-                            val alternativeMatchResult = alternativePattern.find(it)
-                            if(alternativeMatchResult != null) {
-                                val (posX, posY, posZ) = alternativeMatchResult.destructured
-                                Moon(Position.of(posX, posY, posZ), Velocity(0, 0, 0))
-                            } else null
+                        } ?: it.parseMoonWithPattern("<x=([^,]+), y=([^,]+), z=([^>]+)>") {
+                            val (posX, posY, posZ) = destructured
+                            Moon(Position.of(posX, posY, posZ), Velocity.default())
                         }
                     })
         }
+
+        private fun String.parseMoonWithPattern(
+            pattern: String,
+            moonBuilder: MatchResult.() -> Moon
+        ) = Regex(pattern).find(this)?.moonBuilder()
+
     }
 
     fun applyVelocity() = AstralSystem(moons.map { it.applyVelocity() })
